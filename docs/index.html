@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Worker Health Band mine-worker monitoring and tracking dashboard." />
+    <title>Worker Health Band | Safety Monitor</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="site-header">
+        <div class="brand"><span class="brand-mark" aria-hidden="true">+</span><span><strong>Worker Health Band</strong><small>Mine-worker safety monitor</small></span></div>
+        <div class="connection"><i></i> Band WHB-042 connected</div>
+      </header>
+
+      <section id="safety-banner" class="safety-banner safe" aria-live="polite">
+        <div class="safety-symbol" id="safety-symbol">✓</div>
+        <div><p>Current safety state</p><h1 id="safety-title">All readings stable</h1><span id="safety-message">Latest sensor values are below the displayed hazard thresholds.</span></div>
+        <b id="safety-tag">Live demo</b>
+      </section>
+
+      <section class="dashboard-grid">
+        <section class="monitoring" aria-labelledby="monitoring-title">
+          <div class="section-heading"><h2 id="monitoring-title">Worker monitoring</h2><p>Current vital signs from worker MW-0742</p></div>
+          <div id="health-cards" class="metric-grid"></div>
+          <div class="section-heading gas-heading"><h2>Gas monitoring</h2><p>Atmosphere values reported by the wristband sensor</p></div>
+          <div id="gas-cards" class="metric-grid"></div>
+        </section>
+
+        <aside class="side-column">
+          <section class="panel tracking-panel" aria-labelledby="tracking-title">
+            <div class="panel-heading"><div><h2 id="tracking-title">Worker tracking</h2><p>Last reported band location</p></div><span class="target-icon">⌾</span></div>
+            <div class="mine-map" aria-label="Last known location: North Drift 04, Level minus 220 metres, Checkpoint 7">
+              <span class="tunnel tunnel-one"></span><span class="tunnel tunnel-two"></span><span class="worker-pin">●</span><strong>NORTH DRIFT 04</strong><em>Level −220 m · Checkpoint 7</em>
+            </div>
+            <div class="tracking-details"><div><small>Worker</small><b>Arjun Singh</b></div><div><small>Last update</small><b>Just now</b></div></div>
+          </section>
+
+          <section class="panel alarm-panel" aria-labelledby="alarm-title">
+            <div class="panel-heading"><div><h2 id="alarm-title">Gas alarm</h2><p>Test the website alert workflow</p></div><span class="alarm-icon">⌁</span></div>
+            <div id="alarm-summary" class="alarm-summary safe">No active gas hazard</div>
+            <p id="alarm-copy" class="alarm-copy">Use the test button to demonstrate the unsafe-gas alert state.</p>
+            <div id="active-gases" class="active-gases" hidden></div>
+            <div class="button-row"><button id="alarm-button" class="danger-button" type="button">Run gas alarm test</button><button id="ack-button" class="secondary-button" type="button" hidden>Acknowledge</button><button id="reset-button" class="secondary-button" type="button" hidden>Reset</button></div>
+          </section>
+        </aside>
+      </section>
+
+      <section class="panel standards-panel" aria-labelledby="standards-title">
+        <div class="panel-heading"><div><h2 id="standards-title">Reading / Standard / Status</h2><p>Reference baselines; your approved mine requirements may be stricter.</p></div><span class="check-icon">✓</span></div>
+        <div class="standard-table" role="table" aria-label="Safety readings compared with reference standards">
+          <div class="table-row table-header" role="row"><span>Sensor</span><span>Reading</span><span>Standard</span><span>Status</span></div>
+          <div id="standard-rows"></div>
+        </div>
+      </section>
+
+      <footer><span>ⓘ</span> Demo data only. This website does not replace certified gas monitoring, approved site thresholds, sensor calibration, or emergency procedures.</footer>
+    </main>
+    <script src="./app.js"></script>
+  </body>
+</html>
