@@ -1,0 +1,23 @@
+# Project TODO
+
+- [x] Inspect the selected SIH-WORKER-HEALTH repository and identify reusable product concepts.
+- [x] Research authoritative physiological reference ranges and mine-atmosphere exposure limits.
+- [x] Record source-linked standards for the requested Reading / Standard / Status comparison.
+- [x] Implement a portrait-first mine-worker wristband safety dashboard.
+- [x] Implement live-reading cards for heart rate, respiratory rate, body temperature, oxygen level, and gas telemetry.
+- [x] Implement visible and haptic hazardous-gas alert behavior for the demo workflow.
+- [x] Implement an alerts view with acknowledgement and non-resolution warning language.
+- [x] Implement standards and source traceability in the app.
+- [x] Implement a local deterministic demonstration telemetry feed with explicit prototype labeling.
+- [x] Create a custom Worker Health Band launcher icon and update application branding.
+- [x] Add automated tests for safety-state calculations and core interaction flows.
+- [x] Verify type checking and the built mobile-app experience before delivery.
+- [x] Define a versioned telemetry contract shared by C++ wristband firmware, Python gateway, and mobile interface.
+- [x] Add C++ reference firmware for sensor acquisition, threshold evaluation, local alarm actuation, and authenticated telemetry transmission.
+- [x] Add a Python reference gateway for telemetry validation, safety-state derivation, and mobile-ready status payloads.
+- [x] Document prototype safety constraints, calibration responsibilities, and approved-site threshold replacement requirements.
+- [x] Rebuild the Worker Health Band experience as a responsive web dashboard with desktop and mobile layouts.
+- [x] Validate responsive dashboard behavior and provide a website-ready project version.
+- [x] Optimize the approved generated icon copies for checkpoint eligibility.
+- [x] Save a recoverable website checkpoint after asset optimization.
+- [ ] Synchronize the completed Worker Health Band website and reference modules to GitHub.
