@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MineGuard — IoT Mine Worker Health & Gas Safety</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg-page: #0b0f19;
+  --bg-card: #131b2e;
+  --bg-card-alt: #18223a;
+  --border-card: #23304e;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --color-safe: #10b981;
+  --color-safe-bg: rgba(16, 185, 129, 0.12);
+  --color-safe-border: #10b981;
+  --color-warning: #f59e0b;
+  --color-warning-bg: rgba(245, 158, 11, 0.14);
+  --color-warning-border: #f59e0b;
+  --color-danger: #ef4444;
+  --color-danger-bg: rgba(239, 68, 68, 0.18);
+  --color-danger-border: #ef4444;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+body { background-color: var(--bg-page); color: var(--text-primary); min-height: 100vh; padding: 20px 16px 40px 16px; }
+.container { max-width: 1200px; margin: 0 auto; }
+.demo-note { max-width: 1200px; margin: 0 auto 14px auto; padding: 10px 16px; background: #18223a; border: 1px dashed #334155; border-radius: 10px; font-size: 0.78rem; color: #94a3b8; }
+.demo-note strong { color: #38bdf8; }
+.app-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-md); margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+.brand { display: flex; align-items: center; gap: 14px; }
+.logo-icon { font-size: 2rem; }
+.brand h1 { font-size: 1.35rem; font-weight: 800; color: #ffffff; }
+.brand p { font-size: 0.8rem; color: var(--text-secondary); }
+.header-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pill-badge { display: flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; font-size: 0.82rem; font-weight: 600; }
+.pill-online { background: var(--color-safe-bg); color: #34d399; border: 1px solid var(--color-safe-border); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-safe); box-shadow: 0 0 8px var(--color-safe); animation: pulse 1.5s infinite; }
+@keyframes pulse { 0% { transform: scale(0.9); opacity: 1; } 50% { transform: scale(1.3); opacity: 0.6; } 100% { transform: scale(0.9); opacity: 1; } }
+.btn-siren { display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: #1e293b; border: 1px solid #334155; border-radius: var(--radius-sm); color: white; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn-siren:hover { background: #334155; }
+.worker-bar { display: flex; justify-content: space-between; align-items: center; background: #0f1626; border: 1px solid var(--border-card); padding: 10px 18px; border-radius: var(--radius-sm); margin-bottom: 20px; font-size: 0.85rem; flex-wrap: wrap; gap: 8px; }
+.worker-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.avatar { font-size: 1.3rem; }
+.zone-text { color: var(--text-secondary); margin-left: 10px; }
+.zone-text strong { color: #38bdf8; }
+.battery-info { display: flex; gap: 16px; color: var(--text-secondary); }
+.battery-info strong { color: #f1f5f9; }
+.section-card { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-lg); padding: 22px; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); }
+.section-title-row { margin-bottom: 16px; }
+.section-title-row h2 { font-size: 1.2rem; font-weight: 700; color: white; }
+.section-title-row .subtitle { font-size: 0.8rem; color: var(--text-secondary); }
+.alert-banner { display: flex; align-items: center; gap: 18px; padding: 18px 24px; border-radius: var(--radius-md); margin-bottom: 20px; transition: all 0.3s ease; }
+.alert-banner.banner-safe { background: var(--color-safe-bg); border: 2px solid var(--color-safe-border); }
+.alert-banner.banner-warning { background: var(--color-warning-bg); border: 2px solid var(--color-warning-border); }
+.alert-banner.banner-danger { background: var(--color-danger-bg); border: 2px solid var(--color-danger-border); animation: strobe-banner 1s infinite alternate; }
+@keyframes strobe-banner { 0% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); } 100% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.8); } }
+.banner-icon { font-size: 2.4rem; flex-shrink: 0; }
+.banner-text h2 { font-size: 1.25rem; font-weight: 800; margin-bottom: 4px; }
+.alert-banner.banner-safe h2 { color: #34d399; }
+.alert-banner.banner-warning h2 { color: #fbbf24; }
+.alert-banner.banner-danger h2 { color: #f87171; }
+.banner-text p { font-size: 0.88rem; color: #e2e8f0; }
+.sop-alert { margin-top: 10px; background: rgba(0, 0, 0, 0.4); border-left: 4px solid var(--color-danger); padding: 8px 12px; border-radius: 4px; font-size: 0.85rem; color: #fecaca; line-height: 1.4; }
+.sop-alert strong { color: #f87171; margin-right: 6px; }
+.gas-cards-grid, .vitals-cards-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+@media (max-width: 900px) { .gas-cards-grid, .vitals-cards-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 550px) { .gas-cards-grid, .vitals-cards-grid { grid-template-columns: 1fr; } }
+.sensor-box, .vital-box { background: var(--bg-card-alt); border: 1px solid var(--border-card); border-radius: var(--radius-md); padding: 16px; transition: all 0.2s; }
+.sensor-box.safe, .vital-box.normal { border-color: var(--border-card); }
+.sensor-box.warning, .vital-box.caution { border-color: var(--color-warning); background: rgba(245, 158, 11, 0.08); }
+.sensor-box.danger, .vital-box.danger { border-color: var(--color-danger); background: rgba(239, 68, 68, 0.12); }
+.sensor-header, .vital-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.sensor-name, .vital-title { font-size: 0.85rem; font-weight: 600; color: #cbd5e1; }
+.status-tag { font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+.tag-safe { background: var(--color-safe-bg); color: var(--color-safe); }
+.tag-warning { background: var(--color-warning-bg); color: var(--color-warning); }
+.tag-danger { background: var(--color-danger-bg); color: var(--color-danger); }
+.sensor-value-row, .vital-value-row { display: flex; align-items: baseline; gap: 6px; margin-bottom: 10px; }
+.value-large { font-size: 2.1rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: white; }
+.unit { font-size: 0.85rem; color: var(--text-secondary); }
+.bar-container { height: 6px; background: #1e293b; border-radius: 3px; overflow: hidden; margin-bottom: 10px; }
+.bar-fill { height: 100%; border-radius: 3px; background: var(--color-safe); transition: width 0.4s ease; }
+.sensor-box.warning .bar-fill { background: var(--color-warning); }
+.sensor-box.danger .bar-fill { background: var(--color-danger); }
+.standard-row, .vital-guide { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); border-top: 1px solid #23304e; padding-top: 8px; }
+.standard-row strong, .vital-guide strong { color: #cbd5e1; }
+.forecast-container { display: grid; grid-template-columns: 320px 1fr; gap: 20px; margin-top: 20px; }
+@media (max-width: 850px) { .forecast-container { grid-template-columns: 1fr; } }
+.forecast-left { display: flex; flex-direction: column; gap: 12px; }
+.fatigue-card { background: var(--bg-card-alt); border: 1px solid var(--border-card); border-radius: var(--radius-md); padding: 14px; }
+.fatigue-card h4 { font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 6px; }
+.fatigue-score-row { display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px; }
+.fatigue-val { font-size: 2.2rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #c084fc; }
+.fatigue-unit { font-size: 1rem; color: var(--text-secondary); }
+.fatigue-tag { font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; margin-left: auto; }
+.fatigue-tag.low { background: var(--color-safe-bg); color: var(--color-safe); }
+.fatigue-tag.moderate { background: var(--color-warning-bg); color: var(--color-warning); }
+.fatigue-tag.high { background: var(--color-danger-bg); color: var(--color-danger); }
+.fatigue-progress { height: 6px; background: #1e293b; border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+.fatigue-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #10b981, #a855f7, #ef4444); transition: width 0.4s ease; }
+.fatigue-caption { font-size: 0.7rem; color: var(--text-muted); }
+.safetime-card { background: var(--bg-card-alt); border: 1px solid var(--border-card); border-radius: var(--radius-md); padding: 12px 14px; display: flex; align-items: center; gap: 12px; }
+.safetime-icon { font-size: 1.8rem; }
+.safetime-label { font-size: 0.75rem; color: var(--text-secondary); display: block; }
+.safetime-card h3 { font-size: 1.3rem; font-weight: 700; color: white; font-family: 'JetBrains Mono', monospace; }
+.safetime-card small { font-size: 0.7rem; color: var(--text-muted); }
+.advisory-box { background: var(--bg-card-alt); border: 1px solid var(--border-card); border-radius: var(--radius-md); padding: 12px; }
+.advisory-box strong { font-size: 0.75rem; color: #38bdf8; display: block; margin-bottom: 3px; }
+.advisory-box p { font-size: 0.78rem; color: #cbd5e1; line-height: 1.3; }
+.forecast-right { background: var(--bg-card-alt); border: 1px solid var(--border-card); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; }
+.chart-header { margin-bottom: 12px; }
+.chart-header h4 { font-size: 0.92rem; font-weight: 700; color: white; }
+.chart-subtitle { font-size: 0.75rem; color: var(--text-secondary); }
+.chart-box { flex: 1; min-height: 220px; position: relative; }
+.test-buttons-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.test-btn { padding: 10px 16px; border-radius: var(--radius-sm); font-size: 0.82rem; font-weight: 600; cursor: pointer; border: 1px solid #334155; background: #1e293b; color: white; transition: all 0.2s; }
+.test-btn:hover { transform: translateY(-1px); filter: brightness(1.15); }
+.test-btn.active { outline: 2px solid #38bdf8; }
+.btn-normal { background: rgba(16, 185, 129, 0.15); border-color: var(--color-safe); color: #34d399; }
+.btn-warning { background: rgba(245, 158, 11, 0.15); border-color: var(--color-warning); color: #fbbf24; }
+.btn-danger { background: rgba(239, 68, 68, 0.15); border-color: var(--color-danger); color: #f87171; }
+.btn-sos { background: rgba(236, 72, 153, 0.2); border-color: #ec4899; color: #f472b6; }
+.app-footer { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--border-card); display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); }
+@media (max-width: 800px) { .app-footer { flex-direction: column; gap: 6px; } }
+</style>
+</head>
+<body>
+
+<div class="demo-note"><strong>Preview mode:</strong> this is your MineGuard frontend (index.html/styles.css) rendered as-is. The test-bench buttons below are wired to local scenario data here (instead of your FastAPI WebSocket backend, which this sandbox can't reach) so you can see how each alert state looks.</div>
+
+<div class="container">
+  <header class="app-header">
+    <div class="brand">
+      <div class="logo-icon">🛡️</div>
+      <div>
+        <h1>MineGuard IoT</h1>
+        <p>Underground Mine Worker Health & Gas Safety System (SIH)</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="pill-badge pill-online" id="status-pill">
+        <span class="dot"></span>
+        <span>ESP32 Band Connected (WHB-042)</span>
+      </div>
+      <button class="btn-siren" id="siren-toggle-btn">
+        <span id="siren-icon">🔊</span>
+        <span id="siren-text">Alarm Sound: ON</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="worker-bar">
+    <div class="worker-info">
+      <span class="avatar">👷</span>
+      <div>
+        <strong id="worker-name">Arjun Singh</strong> (Worker ID: <span id="worker-id">MW-0742</span>)
+        <span class="zone-text">📍 Location: <strong>North Drift 04 (Level -220m)</strong></span>
+      </div>
+    </div>
+    <div class="battery-info">
+      <span>🔋 Battery: <strong>94%</strong></span>
+      <span>📶 Signal: <strong>Strong (-62 dBm)</strong></span>
+    </div>
+  </div>
+
+  <section class="section-card gas-section" id="gas-main-card">
+    <div class="alert-banner banner-safe" id="gas-banner">
+      <div class="banner-icon" id="gas-banner-icon">✅</div>
+      <div class="banner-text">
+        <h2 id="gas-banner-title">ATMOSPHERE SAFE — NO HARMFUL GAS DETECTED</h2>
+        <p id="gas-banner-desc">All atmospheric sensor values are within legal DGMS & OSHA safety standards.</p>
+        <div class="sop-alert" id="gas-sop-alert" style="display: none;">
+          <strong>🚨 EMERGENCY ACTION REQUIRED:</strong>
+          <span id="gas-sop-text"></span>
+        </div>
+      </div>
+    </div>
+    <div class="gas-cards-grid">
+      <div class="sensor-box safe" id="card-ch4">
+        <div class="sensor-header"><span class="sensor-name">Methane (CH₄)</span><span class="status-tag tag-safe" id="tag-ch4">SAFE</span></div>
+        <div class="sensor-value-row"><span class="value-large" id="val-ch4">0.08</span><span class="unit">% vol</span></div>
+        <div class="bar-container"><div class="bar-fill" id="bar-ch4" style="width: 5%;"></div></div>
+        <div class="standard-row"><span>Standard: <strong>&lt; 1.0%</strong></span><span>Evacuate: <strong>≥ 1.5%</strong></span></div>
+      </div>
+      <div class="sensor-box safe" id="card-co">
+        <div class="sensor-header"><span class="sensor-name">Carbon Monoxide (CO)</span><span class="status-tag tag-safe" id="tag-co">SAFE</span></div>
+        <div class="sensor-value-row"><span class="value-large" id="val-co">4.5</span><span class="unit">ppm</span></div>
+        <div class="bar-container"><div class="bar-fill" id="bar-co" style="width: 9%;"></div></div>
+        <div class="standard-row"><span>Standard: <strong>&lt; 25 ppm</strong></span><span>OSHA PEL: <strong>50 ppm</strong></span></div>
+      </div>
+      <div class="sensor-box safe" id="card-o2">
+        <div class="sensor-header"><span class="sensor-name">Oxygen (O₂)</span><span class="status-tag tag-safe" id="tag-o2">OPTIMAL</span></div>
+        <div class="sensor-value-row"><span class="value-large" id="val-o2">20.9</span><span class="unit">%</span></div>
+        <div class="bar-container"><div class="bar-fill" id="bar-o2" style="width: 100%;"></div></div>
+        <div class="standard-row"><span>Nominal: <strong>20.9%</strong></span><span>Min Safe: <strong>≥ 19.5%</strong></span></div>
+      </div>
+      <div class="sensor-box safe" id="card-h2s">
+        <div class="sensor-header"><span class="sensor-name">Hydrogen Sulfide (H₂S)</span><span class="status-tag tag-safe" id="tag-h2s">SAFE</span></div>
+        <div class="sensor-value-row"><span class="value-large" id="val-h2s">0.0</span><span class="unit">ppm</span></div>
+        <div class="bar-container"><div class="bar-fill" id="bar-h2s" style="width: 0%;"></div></div>
+        <div class="standard-row"><span>Standard: <strong>&lt; 5 ppm</strong></span><span>Toxic Limit: <strong>10 ppm</strong></span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-card health-section">
+    <div class="section-title-row">
+      <h2>❤️ Worker Health Monitor & AI Fatigue Forecast</h2>
+      <span class="subtitle">Real-time vitals received from hardware band + 15m/30m/60m predictive trend</span>
+    </div>
+    <div class="vitals-cards-grid">
+      <div class="vital-box normal" id="card-hr">
+        <div class="vital-header"><span class="vital-title">💓 Heartbeat (Pulse)</span><span class="status-tag tag-safe" id="tag-hr">NORMAL</span></div>
+        <div class="vital-value-row"><span class="value-large" id="val-hr">74</span><span class="unit">BPM</span></div>
+        <div class="vital-guide"><span>Standard Resting: <strong>60 – 100 BPM</strong></span><span>High Strain: <strong>&gt; 110 BPM</strong></span></div>
+      </div>
+      <div class="vital-box normal" id="card-resp">
+        <div class="vital-header"><span class="vital-title">🫁 Respiratory Rate</span><span class="status-tag tag-safe" id="tag-resp">NORMAL</span></div>
+        <div class="vital-value-row"><span class="value-large" id="val-resp">15</span><span class="unit">BrPM</span></div>
+        <div class="vital-guide"><span>Standard Resting: <strong>12 – 20 BrPM</strong></span><span>Tachypnea: <strong>&gt; 24 BrPM</strong></span></div>
+      </div>
+      <div class="vital-box normal" id="card-spo2">
+        <div class="vital-header"><span class="vital-title">💧 Blood Oxygen (SpO₂)</span><span class="status-tag tag-safe" id="tag-spo2">OPTIMAL</span></div>
+        <div class="vital-value-row"><span class="value-large" id="val-spo2">98.2</span><span class="unit">%</span></div>
+        <div class="vital-guide"><span>Standard: <strong>≥ 95%</strong></span><span>Hypoxia: <strong>&lt; 92%</strong></span></div>
+      </div>
+      <div class="vital-box normal" id="card-temp">
+        <div class="vital-header"><span class="vital-title">🌡️ Body Temperature</span><span class="status-tag tag-safe" id="tag-temp">NORMAL</span></div>
+        <div class="vital-value-row"><span class="value-large" id="val-temp">36.8</span><span class="unit">°C</span></div>
+        <div class="vital-guide"><span>Standard: <strong>36.5 – 37.3 °C</strong></span><span>Heat Stroke: <strong>≥ 38.6 °C</strong></span></div>
+      </div>
+    </div>
+
+    <div class="forecast-container">
+      <div class="forecast-left">
+        <div class="fatigue-card">
+          <h4>Worker Fatigue Score</h4>
+          <div class="fatigue-score-row">
+            <span class="fatigue-val" id="val-fatigue">18.5</span>
+            <span class="fatigue-unit">%</span>
+            <span class="fatigue-tag low" id="tag-fatigue">LOW RISK</span>
+          </div>
+          <div class="fatigue-progress"><div class="fatigue-fill" id="bar-fatigue" style="width: 18.5%;"></div></div>
+          <p class="fatigue-caption">Calculated from cardiac drift, oxygenation deficit & thermal load.</p>
+        </div>
+        <div class="safetime-card">
+          <div class="safetime-icon">⏱️</div>
+          <div>
+            <span class="safetime-label">Safe Working Time Remaining:</span>
+            <h3 id="val-safetime">180 mins</h3>
+            <small>Until mandatory cooldown break</small>
+          </div>
+        </div>
+        <div class="advisory-box" id="box-advisory">
+          <strong>📋 AI Ergonomic Recommendation:</strong>
+          <p id="txt-advisory">Worker vitals nominal. Proceed with standard shift work.</p>
+        </div>
+      </div>
+      <div class="forecast-right">
+        <div class="chart-header">
+          <h4>📈 Predicted Health & Fatigue Forecast</h4>
+          <span class="chart-subtitle">Real-time +15m, +30m, and +60m trend projection</span>
+        </div>
+        <div class="chart-box"><canvas id="forecastChart"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-card test-section">
+    <div class="section-title-row">
+      <h2>⚡ Live Hardware Test Bench (SIH Presentation Demo)</h2>
+      <span class="subtitle">Click any scenario below to immediately demonstrate live sensor signals and alert responses</span>
+    </div>
+    <div class="test-buttons-row">
+      <button class="test-btn btn-normal active" data-scenario="NORMAL">🟢 Normal Working Shift</button>
+      <button class="test-btn btn-danger" data-scenario="METHANE_SPIKE">🔴 Gas Alert: Methane Spike (2.2% Evacuate)</button>
+      <button class="test-btn btn-danger" data-scenario="O2_DROP">🔴 Gas Alert: Low Oxygen (16.4% Hypoxia)</button>
+      <button class="test-btn btn-warning" data-scenario="CO_LEAK">🟠 Gas Alert: CO Leak (75 ppm Danger)</button>
+      <button class="test-btn btn-danger" data-scenario="CARDIAC_SPIKE">🔴 Health Alert: Cardiac Distress (152 BPM)</button>
+      <button class="test-btn btn-danger" data-scenario="FALL_ALARM">🔴 Health Alert: Worker Fall / Impact</button>
+      <button class="test-btn btn-sos" data-scenario="SOS_PANIC">🚨 Worker SOS Panic Button</button>
+    </div>
+  </section>
+
+  <footer class="app-footer">
+    <div>MineGuard AI — Smart India Hackathon IoT Solution for Underground Mine Workers</div>
+    <div>Compliant with DGMS Standards, 30 CFR §75.323, OSHA Table Z-1 & MedlinePlus Vital Signs</div>
+  </footer>
+</div>
+
+<script>
+let audioContext = null;
+let isAudioEnabled = true;
+let isSirenPlaying = false;
+let chartInstance = null;
+
+function initAudio() {
+  if (!audioContext) {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtx) audioContext = new AudioCtx();
+  }
+}
+function playAlarmSound(isCritical = true) {
+  if (!isAudioEnabled) return;
+  initAudio();
+  if (!audioContext || isSirenPlaying) return;
+  try {
+    if (audioContext.state === 'suspended') audioContext.resume();
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    const now = audioContext.currentTime;
+    if (isCritical) {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(880, now);
+      osc.frequency.exponentialRampToValueAtTime(440, now + 0.4);
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.8);
+      gain.gain.setValueAtTime(0.18, now);
+    } else {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(600, now);
+      gain.gain.setValueAtTime(0.1, now);
+    }
+    osc.connect(gain); gain.connect(audioContext.destination);
+    osc.start(); osc.stop(now + 0.8);
+    isSirenPlaying = true;
+    setTimeout(() => { isSirenPlaying = false; }, 900);
+  } catch (err) { console.warn("Audio alarm blocked:", err); }
+}
+
+function initChart() {
+  const ctx = document.getElementById('forecastChart');
+  if (!ctx) return;
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['Current', '+15 mins', '+30 mins', '+60 mins'],
+      datasets: [
+        { label: 'Heart Rate (BPM)', data: [74, 76, 78, 80], borderColor: '#f43f5e', backgroundColor: 'rgba(244, 63, 94, 0.1)', borderWidth: 3, tension: 0.3, pointRadius: 5, pointBackgroundColor: '#f43f5e', yAxisID: 'y' },
+        { label: 'Fatigue Score (%)', data: [18.5, 24.0, 32.5, 45.0], borderColor: '#a855f7', backgroundColor: 'rgba(168, 85, 247, 0.15)', borderWidth: 3, borderDash: [5, 5], tension: 0.3, pointRadius: 5, pointBackgroundColor: '#a855f7', yAxisID: 'y1' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { labels: { color: '#cbd5e1', font: { family: 'Inter', size: 12, weight: 'bold' } } } },
+      scales: {
+        x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } },
+        y: { type: 'linear', position: 'left', min: 40, max: 180, grid: { color: '#1e293b' }, ticks: { color: '#f43f5e', font: { family: 'JetBrains Mono', size: 11 } }, title: { display: true, text: 'Heart Rate (BPM)', color: '#f43f5e' } },
+        y1: { type: 'linear', position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks: { color: '#c084fc', font: { family: 'JetBrains Mono', size: 11 } }, title: { display: true, text: 'Fatigue Score (%)', color: '#c084fc' } }
+      }
+    }
+  });
+}
+
+function updateGasCard(id, val, warnLimit, critLimit, maxScale, formatFn) {
+  const card = document.getElementById(`card-${id}`);
+  const valEl = document.getElementById(`val-${id}`);
+  const tagEl = document.getElementById(`tag-${id}`);
+  const barEl = document.getElementById(`bar-${id}`);
+  if (valEl) valEl.innerText = formatFn(val);
+  if (barEl) barEl.style.width = `${Math.min(100, (val / maxScale) * 100)}%`;
+  let state = 'safe', tagText = 'SAFE';
+  if (val >= critLimit) { state = 'danger'; tagText = 'CRITICAL'; }
+  else if (val >= warnLimit) { state = 'warning'; tagText = 'WARNING'; }
+  if (card) card.className = `sensor-box ${state}`;
+  if (tagEl) { tagEl.className = `status-tag tag-${state}`; tagEl.innerText = tagText; }
+}
+function updateOxygenCard(id, val) {
+  const card = document.getElementById(`card-${id}`);
+  const valEl = document.getElementById(`val-${id}`);
+  const tagEl = document.getElementById(`tag-${id}`);
+  const barEl = document.getElementById(`bar-${id}`);
+  if (valEl) valEl.innerText = val.toFixed(1);
+  if (barEl) barEl.style.width = `${Math.min(100, (val / 20.9) * 100)}%`;
+  let state = 'safe', tagText = 'OPTIMAL';
+  if (val < 18.0) { state = 'danger'; tagText = 'CRITICAL'; }
+  else if (val < 19.5) { state = 'warning'; tagText = 'LOW'; }
+  if (card) card.className = `sensor-box ${state}`;
+  if (tagEl) { tagEl.className = `status-tag tag-${state}`; tagEl.innerText = tagText; }
+}
+function updateVitalCard(id, val, stateClass, tagText) {
+  const card = document.getElementById(`card-${id}`);
+  const valEl = document.getElementById(`val-${id}`);
+  const tagEl = document.getElementById(`tag-${id}`);
+  if (valEl) valEl.innerText = (id === 'temp' || id === 'spo2') ? val.toFixed(1) : val.toFixed(0);
+  if (card) card.className = `vital-box ${stateClass}`;
+  if (tagEl) { tagEl.className = `status-tag tag-${stateClass === 'caution' ? 'warning' : stateClass === 'danger' ? 'danger' : 'safe'}`; tagEl.innerText = tagText; }
+}
+
+// Local scenario data mirroring backend/app/hardware_simulator.py values,
+// since this preview can't reach the real FastAPI/WebSocket backend.
+const SCENARIOS = {
+  NORMAL: { ch4: 0.08, co: 4.5, o2: 20.9, h2s: 0.0, hr: 74, resp: 15, spo2: 98.2, temp: 36.8,
+    banner: 'safe', title: 'ATMOSPHERE SAFE — NO HARMFUL GAS DETECTED', desc: 'All atmospheric sensor values are within legal DGMS & OSHA safety standards.', sop: null,
+    fatigue: 18.5, safetime: 180, risk: 'low', advisory: 'Worker vitals nominal. Proceed with standard shift work.',
+    forecastHr: [74, 76, 78, 80], forecastFatigue: [18.5, 24.0, 32.5, 45.0] },
+  METHANE_SPIKE: { ch4: 2.18, co: 18.0, o2: 20.9, h2s: 0.0, hr: 108, resp: 22, spo2: 96.5, temp: 37.0,
+    banner: 'danger', title: 'CRITICAL GAS HAZARD — METHANE ≥ EVACUATION LIMIT', desc: 'Gas readings exceed legal mining survival limits. Sound mine evacuation siren!', sop: 'Evacuate North Drift 04 immediately. De-energize electrical equipment. Ventilate and re-test before re-entry.',
+    fatigue: 38.0, safetime: 45, risk: 'moderate', advisory: 'Elevated adrenaline response detected. Withdraw worker from zone and monitor post-evacuation vitals.',
+    forecastHr: [108, 116, 122, 118], forecastFatigue: [38, 46, 52, 48] },
+  O2_DROP: { ch4: 0.08, co: 4.5, o2: 16.4, h2s: 0.0, hr: 126, resp: 28, spo2: 86.5, temp: 37.0,
+    banner: 'danger', title: 'CRITICAL GAS HAZARD — OXYGEN BELOW SAFE LIMIT', desc: 'Gas readings exceed legal mining survival limits. Sound mine evacuation siren!', sop: 'Hypoxic atmosphere detected. Evacuate immediately and administer supplemental oxygen on surface.',
+    fatigue: 55.0, safetime: 20, risk: 'high', advisory: 'Severe hypoxia risk. Remove worker from zone and seek medical evaluation immediately.',
+    forecastHr: [126, 132, 128, 120], forecastFatigue: [55, 62, 58, 50] },
+  CO_LEAK: { ch4: 0.45, co: 74.5, o2: 20.9, h2s: 0.0, hr: 114, resp: 18, spo2: 97.0, temp: 37.6,
+    banner: 'warning', title: 'ATMOSPHERIC GAS WARNING — CO EXCEEDS OSHA PEL', desc: 'Gas concentrations elevated above baseline. Ventilation inspection required.', sop: 'Carbon monoxide above OSHA PEL (50 ppm). Increase ventilation and inspect for combustion source.',
+    fatigue: 30.0, safetime: 90, risk: 'moderate', advisory: 'CO exposure elevated. Rotate worker to ventilated zone and reassess in 15 minutes.',
+    forecastHr: [114, 118, 112, 108], forecastFatigue: [30, 35, 33, 28] },
+  CARDIAC_SPIKE: { ch4: 0.08, co: 4.5, o2: 20.9, h2s: 0.0, hr: 152, resp: 29, spo2: 90.2, temp: 38.9,
+    banner: 'safe', title: 'ATMOSPHERE SAFE — NO HARMFUL GAS DETECTED', desc: 'All atmospheric sensor values are within legal DGMS & OSHA safety standards.', sop: null,
+    fatigue: 68.0, safetime: 10, risk: 'high', advisory: 'Severe tachycardia and possible heat stroke. Stop work immediately and initiate cooling/medical response.',
+    forecastHr: [152, 158, 149, 140], forecastFatigue: [68, 74, 70, 62] },
+  FALL_ALARM: { ch4: 0.08, co: 4.5, o2: 20.9, h2s: 0.0, hr: 54, resp: 9, spo2: 96.0, temp: 36.6,
+    banner: 'safe', title: 'ATMOSPHERE SAFE — NO HARMFUL GAS DETECTED', desc: 'All atmospheric sensor values are within legal DGMS & OSHA safety standards.', sop: null,
+    fatigue: 40.0, safetime: 30, risk: 'high', advisory: 'Fall/impact detected with depressed vitals. Dispatch rescue team to North Drift 04 immediately.',
+    forecastHr: [54, 58, 62, 66], forecastFatigue: [40, 42, 38, 34] },
+  SOS_PANIC: { ch4: 0.08, co: 4.5, o2: 20.9, h2s: 0.0, hr: 132, resp: 25, spo2: 96.5, temp: 37.0,
+    banner: 'safe', title: 'ATMOSPHERE SAFE — NO HARMFUL GAS DETECTED', desc: 'All atmospheric sensor values are within legal DGMS & OSHA safety standards.', sop: null,
+    fatigue: 44.0, safetime: 25, risk: 'high', advisory: 'Worker-initiated SOS. Dispatch response team to North Drift 04 and open direct radio contact.',
+    forecastHr: [132, 136, 128, 118], forecastFatigue: [44, 48, 42, 36] }
+};
+
+function applyScenario(scen) {
+  const s = SCENARIOS[scen] || SCENARIOS.NORMAL;
+
+  const banner = document.getElementById('gas-banner');
+  const bannerIcon = document.getElementById('gas-banner-icon');
+  const bannerTitle = document.getElementById('gas-banner-title');
+  const bannerDesc = document.getElementById('gas-banner-desc');
+  const sopBox = document.getElementById('gas-sop-alert');
+  const sopText = document.getElementById('gas-sop-text');
+
+  banner.className = `alert-banner banner-${s.banner}`;
+  bannerIcon.innerText = s.banner === 'danger' ? '🚨' : s.banner === 'warning' ? '⚠️' : '✅';
+  bannerTitle.innerText = s.title;
+  bannerDesc.innerText = s.desc;
+  if (s.sop) { sopBox.style.display = 'block'; sopText.innerText = s.sop; }
+  else { sopBox.style.display = 'none'; }
+  if (s.banner === 'danger') playAlarmSound(true);
+  else if (s.banner === 'warning') playAlarmSound(false);
+
+  updateGasCard('ch4', s.ch4, 1.0, 1.5, 3.0, v => v.toFixed(2));
+  updateGasCard('co', s.co, 25.0, 50.0, 50.0, v => v.toFixed(1));
+  updateOxygenCard('o2', s.o2);
+  updateGasCard('h2s', s.h2s, 5.0, 10.0, 10.0, v => v.toFixed(1));
+
+  updateVitalCard('hr', s.hr, s.hr >= 138 ? 'danger' : s.hr > 110 ? 'caution' : 'normal', s.hr >= 138 ? 'CRITICAL' : s.hr > 110 ? 'ELEVATED' : 'NORMAL');
+  updateVitalCard('resp', s.resp, (s.resp >= 30 || s.resp <= 8) ? 'danger' : s.resp > 24 ? 'caution' : 'normal', s.resp >= 30 ? 'CRITICAL' : s.resp > 24 ? 'ELEVATED' : 'NORMAL');
+  updateVitalCard('spo2', s.spo2, s.spo2 <= 88 ? 'danger' : s.spo2 < 93 ? 'caution' : 'normal', s.spo2 <= 88 ? 'HYPOXIA' : s.spo2 < 93 ? 'MILD' : 'OPTIMAL');
+  updateVitalCard('temp', s.temp, s.temp >= 38.6 ? 'danger' : s.temp > 37.8 ? 'caution' : 'normal', s.temp >= 38.6 ? 'HEAT STROKE' : s.temp > 37.8 ? 'ELEVATED' : 'NORMAL');
+
+  document.getElementById('val-fatigue').innerText = s.fatigue.toFixed(1);
+  document.getElementById('bar-fatigue').style.width = `${Math.min(100, s.fatigue)}%`;
+  document.getElementById('val-safetime').innerText = `${s.safetime} mins`;
+  document.getElementById('txt-advisory').innerText = s.advisory;
+  const tagFatigue = document.getElementById('tag-fatigue');
+  tagFatigue.innerText = `${s.risk.toUpperCase()} RISK`;
+  tagFatigue.className = `fatigue-tag ${s.risk}`;
+
+  if (chartInstance) {
+    chartInstance.data.datasets[0].data = s.forecastHr;
+    chartInstance.data.datasets[1].data = s.forecastFatigue;
+    chartInstance.update();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initChart();
+  applyScenario('NORMAL');
+
+  document.querySelectorAll('.test-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      initAudio();
+      document.querySelectorAll('.test-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      applyScenario(btn.dataset.scenario);
+    });
+  });
+
+  const sirenBtn = document.getElementById('siren-toggle-btn');
+  sirenBtn.addEventListener('click', () => {
+    initAudio();
+    isAudioEnabled = !isAudioEnabled;
+    const text = document.getElementById('siren-text');
+    const icon = document.getElementById('siren-icon');
+    if (isAudioEnabled) { text.innerText = 'Alarm Sound: ON'; icon.innerText = '🔊'; }
+    else { text.innerText = 'Alarm Sound: MUTED'; icon.innerText = '🔇'; }
+  });
+});
+</script>
+</body>
+</html>
