@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MineGuard — IoT Mine Worker Health & Gas Safety</title>
+  
+  <!-- Clean Inter Font & Chart.js -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  
+  <!-- APP CONTAINER -->
+  <div class="container">
+    
+    <!-- TOP HEADER -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo-icon">🛡️</div>
+        <div>
+          <h1>MineGuard IoT</h1>
+          <p>Underground Mine Worker Health & Gas Safety System (SIH)</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="pill-badge pill-online" id="status-pill">
+          <span class="dot"></span>
+          <span>ESP32 Band Connected (WHB-042)</span>
+        </div>
+        <button class="btn-siren" id="siren-toggle-btn">
+          <span id="siren-icon">🔊</span>
+          <span id="siren-text">Alarm Sound: ON</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- WORKER BAR -->
+    <div class="worker-bar">
+      <div class="worker-info">
+        <span class="avatar">👷</span>
+        <div>
+          <strong id="worker-name">Arjun Singh</strong> (Worker ID: <span id="worker-id">MW-0742</span>)
+          <span class="zone-text">📍 Location: <strong>North Drift 04 (Level -220m)</strong></span>
+        </div>
+      </div>
+      <div class="battery-info">
+        <span>🔋 Battery: <strong>94%</strong></span>
+        <span>📶 Signal: <strong>Strong (-62 dBm)</strong></span>
+      </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- 1ST CORE FEATURE: GAS HAZARD ALERT SYSTEM -->
+    <!-- ======================================================= -->
+    <section class="section-card gas-section" id="gas-main-card">
+      
+      <!-- Big Master Gas Banner -->
+      <div class="alert-banner banner-safe" id="gas-banner">
+        <div class="banner-icon" id="gas-banner-icon">✅</div>
+        <div class="banner-text">
+          <h2 id="gas-banner-title">ATMOSPHERE SAFE — NO HARMFUL GAS DETECTED</h2>
+          <p id="gas-banner-desc">All atmospheric sensor values are within legal DGMS & OSHA safety standards.</p>
+          <div class="sop-alert" id="gas-sop-alert" style="display: none;">
+            <strong>🚨 EMERGENCY ACTION REQUIRED:</strong>
+            <span id="gas-sop-text"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 Clean Gas Cards -->
+      <div class="gas-cards-grid">
+        
+        <!-- Methane (CH4) -->
+        <div class="sensor-box safe" id="card-ch4">
+          <div class="sensor-header">
+            <span class="sensor-name">Methane (CH₄)</span>
+            <span class="status-tag tag-safe" id="tag-ch4">SAFE</span>
+          </div>
+          <div class="sensor-value-row">
+            <span class="value-large" id="val-ch4">0.08</span>
+            <span class="unit">% vol</span>
+          </div>
+          <div class="bar-container">
+            <div class="bar-fill" id="bar-ch4" style="width: 5%;"></div>
+          </div>
+          <div class="standard-row">
+            <span>Standard: <strong>&lt; 1.0%</strong></span>
+            <span>Evacuate: <strong>≥ 1.5%</strong></span>
+          </div>
+        </div>
+
+        <!-- Carbon Monoxide (CO) -->
+        <div class="sensor-box safe" id="card-co">
+          <div class="sensor-header">
+            <span class="sensor-name">Carbon Monoxide (CO)</span>
+            <span class="status-tag tag-safe" id="tag-co">SAFE</span>
+          </div>
+          <div class="sensor-value-row">
+            <span class="value-large" id="val-co">4.5</span>
+            <span class="unit">ppm</span>
+          </div>
+          <div class="bar-container">
+            <div class="bar-fill" id="bar-co" style="width: 9%;"></div>
+          </div>
+          <div class="standard-row">
+            <span>Standard: <strong>&lt; 25 ppm</strong></span>
+            <span>OSHA PEL: <strong>50 ppm</strong></span>
+          </div>
+        </div>
+
+        <!-- Oxygen (O2) -->
+        <div class="sensor-box safe" id="card-o2">
+          <div class="sensor-header">
+            <span class="sensor-name">Oxygen (O₂)</span>
+            <span class="status-tag tag-safe" id="tag-o2">OPTIMAL</span>
+          </div>
+          <div class="sensor-value-row">
+            <span class="value-large" id="val-o2">20.9</span>
+            <span class="unit">%</span>
+          </div>
+          <div class="bar-container">
+            <div class="bar-fill" id="bar-o2" style="width: 100%;"></div>
+          </div>
+          <div class="standard-row">
+            <span>Nominal: <strong>20.9%</strong></span>
+            <span>Min Safe: <strong>≥ 19.5%</strong></span>
+          </div>
+        </div>
+
+        <!-- Hydrogen Sulfide (H2S) -->
+        <div class="sensor-box safe" id="card-h2s">
+          <div class="sensor-header">
+            <span class="sensor-name">Hydrogen Sulfide (H₂S)</span>
+            <span class="status-tag tag-safe" id="tag-h2s">SAFE</span>
+          </div>
+          <div class="sensor-value-row">
+            <span class="value-large" id="val-h2s">0.0</span>
+            <span class="unit">ppm</span>
+          </div>
+          <div class="bar-container">
+            <div class="bar-fill" id="bar-h2s" style="width: 0%;"></div>
+          </div>
+          <div class="standard-row">
+            <span>Standard: <strong>&lt; 5 ppm</strong></span>
+            <span>Toxic Limit: <strong>10 ppm</strong></span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================= -->
+    <!-- 2ND CORE FEATURE: HEALTH MONITOR & FORECAST -->
+    <!-- ======================================================= -->
+    <section class="section-card health-section">
+      <div class="section-title-row">
+        <h2>❤️ Worker Health Monitor & AI Fatigue Forecast</h2>
+        <span class="subtitle">Real-time vitals received from hardware band + 15m/30m/60m predictive trend</span>
+      </div>
+
+      <!-- 4 Vitals Cards -->
+      <div class="vitals-cards-grid">
+        
+        <!-- Heartbeat Card -->
+        <div class="vital-box normal" id="card-hr">
+          <div class="vital-header">
+            <span class="vital-title">💓 Heartbeat (Pulse)</span>
+            <span class="status-tag tag-safe" id="tag-hr">NORMAL</span>
+          </div>
+          <div class="vital-value-row">
+            <span class="value-large" id="val-hr">74</span>
+            <span class="unit">BPM</span>
+          </div>
+          <div class="vital-guide">
+            <span>Standard Resting: <strong>60 – 100 BPM</strong></span>
+            <span>High Strain: <strong>&gt; 110 BPM</strong></span>
+          </div>
+        </div>
+
+        <!-- Respiratory Rate Card -->
+        <div class="vital-box normal" id="card-resp">
+          <div class="vital-header">
+            <span class="vital-title">🫁 Respiratory Rate</span>
+            <span class="status-tag tag-safe" id="tag-resp">NORMAL</span>
+          </div>
+          <div class="vital-value-row">
+            <span class="value-large" id="val-resp">15</span>
+            <span class="unit">BrPM</span>
+          </div>
+          <div class="vital-guide">
+            <span>Standard Resting: <strong>12 – 20 BrPM</strong></span>
+            <span>Tachypnea: <strong>&gt; 24 BrPM</strong></span>
+          </div>
+        </div>
+
+        <!-- Blood Oxygen SpO2 -->
+        <div class="vital-box normal" id="card-spo2">
+          <div class="vital-header">
+            <span class="vital-title">💧 Blood Oxygen (SpO₂)</span>
+            <span class="status-tag tag-safe" id="tag-spo2">OPTIMAL</span>
+          </div>
+          <div class="vital-value-row">
+            <span class="value-large" id="val-spo2">98.2</span>
+            <span class="unit">%</span>
+          </div>
+          <div class="vital-guide">
+            <span>Standard: <strong>≥ 95%</strong></span>
+            <span>Hypoxia: <strong>&lt; 92%</strong></span>
+          </div>
+        </div>
+
+        <!-- Body Temperature -->
+        <div class="vital-box normal" id="card-temp">
+          <div class="vital-header">
+            <span class="vital-title">🌡️ Body Temperature</span>
+            <span class="status-tag tag-safe" id="tag-temp">NORMAL</span>
+          </div>
+          <div class="vital-value-row">
+            <span class="value-large" id="val-temp">36.8</span>
+            <span class="unit">°C</span>
+          </div>
+          <div class="vital-guide">
+            <span>Standard: <strong>36.5 – 37.3 °C</strong></span>
+            <span>Heat Stroke: <strong>≥ 38.6 °C</strong></span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- AI FORECAST & PREDICTION CONTAINER -->
+      <div class="forecast-container">
+        
+        <!-- Left: Summary Metrics -->
+        <div class="forecast-left">
+          <div class="fatigue-card">
+            <h4>Worker Fatigue Score</h4>
+            <div class="fatigue-score-row">
+              <span class="fatigue-val" id="val-fatigue">18.5</span>
+              <span class="fatigue-unit">%</span>
+              <span class="fatigue-tag low" id="tag-fatigue">LOW RISK</span>
+            </div>
+            <div class="fatigue-progress">
+              <div class="fatigue-fill" id="bar-fatigue" style="width: 18.5%;"></div>
+            </div>
+            <p class="fatigue-caption">Calculated from cardiac drift, oxygenation deficit & thermal load.</p>
+          </div>
+
+          <div class="safetime-card">
+            <div class="safetime-icon">⏱️</div>
+            <div>
+              <span class="safetime-label">Safe Working Time Remaining:</span>
+              <h3 id="val-safetime">180 mins</h3>
+              <small>Until mandatory cooldown break</small>
+            </div>
+          </div>
+
+          <div class="advisory-box" id="box-advisory">
+            <strong>📋 AI Ergonomic Recommendation:</strong>
+            <p id="txt-advisory">Worker vitals nominal. Proceed with standard shift work.</p>
+          </div>
+        </div>
+
+        <!-- Right: Interactive Dynamic Line Chart -->
+        <div class="forecast-right">
+          <div class="chart-header">
+            <h4>📈 Predicted Health & Fatigue Forecast</h4>
+            <span class="chart-subtitle">Real-time +15m, +30m, and +60m trend projection</span>
+          </div>
+          <div class="chart-box">
+            <canvas id="forecastChart"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ======================================================= -->
+    <!-- 3. LIVE TEST BENCH (For SIH Presentation & Jury Demo) -->
+    <!-- ======================================================= -->
+    <section class="section-card test-section">
+      <div class="section-title-row">
+        <h2>⚡ Live Hardware Test Bench (SIH Presentation Demo)</h2>
+        <span class="subtitle">Click any scenario below to immediately demonstrate live sensor signals and alert responses</span>
+      </div>
+
+      <div class="test-buttons-row">
+        <button class="test-btn btn-normal active" onclick="runScenario('NORMAL')">
+          🟢 Normal Working Shift
+        </button>
+        <button class="test-btn btn-danger" onclick="runScenario('METHANE_SPIKE')">
+          🔴 Gas Alert: Methane Spike (2.2% Evacuate)
+        </button>
+        <button class="test-btn btn-danger" onclick="runScenario('O2_DROP')">
+          🔴 Gas Alert: Low Oxygen (16.4% Hypoxia)
+        </button>
+        <button class="test-btn btn-warning" onclick="runScenario('CO_LEAK')">
+          🟠 Gas Alert: CO Leak (75 ppm Danger)
+        </button>
+        <button class="test-btn btn-danger" onclick="runScenario('CARDIAC_SPIKE')">
+          🔴 Health Alert: Cardiac Distress (152 BPM)
+        </button>
+        <button class="test-btn btn-danger" onclick="runScenario('FALL_ALARM')">
+          🔴 Health Alert: Worker Fall / Impact
+        </button>
+        <button class="test-btn btn-sos" onclick="runScenario('SOS_PANIC')">
+          🚨 Worker SOS Panic Button
+        </button>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="app-footer">
+      <div>MineGuard AI — Smart India Hackathon IoT Solution for Underground Mine Workers</div>
+      <div>Compliant with DGMS Standards, 30 CFR §75.323, OSHA Table Z-1 & MedlinePlus Vital Signs</div>
+    </footer>
+
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
